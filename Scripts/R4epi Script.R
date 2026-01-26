@@ -1,4 +1,6 @@
-# Descriptive Analysis Chapter
+#1 Descriptive Analysis Chapter
+#1.2 Numerical Descriptions of Catergorical Variables
+
 demo <- tibble(
   id = c("001", "002", "003", "004"),
   age = c(30,67,52,56),
@@ -28,7 +30,7 @@ demo <- demo |> mutate(
 table(demo)
 view(demo)
 table(demo$edu_f_from_char)
-
+#1.3 Measures of Central Tendecy (Mean mode and Median)
 height_and_weight_20 <- tibble(
   id = c(
     "001", "002", "003", "004", "005", "006", "007", "008", "009", "010", "011", 
@@ -49,7 +51,7 @@ height_and_weight_20 |> filter(!is.na(sex_f)) |> count(sex_f) |> mutate(percent=
 
 install.packages("freqtables")
 height_and_weight_20 |> filter(!is.na (sex_f)) |> freq_table(sex_f)
-
+#Measures of Dispersion
 height_and_weight_20 <- tribble(
   ~id,   ~sex,     ~ht_in, ~wt_lbs,
   "001", "Male",   71,     190,
@@ -171,7 +173,7 @@ tibble(
   SD       = purrr::map_dbl(sim_data, sd)
 )
 
-# Relationship between a Continuous outcome and a Continous Predictor
+#1.4Continuous outcome vs Continous Predictor
 set.seed(123)
 df <- tibble(id=1:20,
              x=sample(x = 0:100, size = 20, replace = TRUE),
@@ -218,7 +220,7 @@ cor.test(class$ht_in, class$wt_lbs)
 ggplot(class, aes(ht_in, wt_lbs)) +geom_smooth(method = "lm") +
 geom_jitter() +theme_classic()
 
-
+#1.5 Continuous Outcome vs Categorical predictor
 class <- tibble(
   age       = c(32, 30, 32, 29, 24, 38, 25, 24, 48, 29, 22, 29, 24, 28, 24, 25, 
                 25, 22, 25, 24, 25, 24, 23, 24, 31, 24, 29, 24, 22, 23, 26, 23, 
@@ -311,7 +313,7 @@ class %>%
   theme_classic() +
   theme(legend.position = "none", axis.text.x = element_text(size = 10))
 
-#Categorical outcome vs Catergotical Predictor
+#1.6 Categorical outcome vs Catergotical Predictor
 class <- tibble(
   age       = c(32, 30, 32, 29, 24, 38, 25, 24, 48, 29, 22, 29, 24, 28, 24, 25, 
                 25, 22, 25, 24, 25, 24, 23, 24, 31, 24, 29, 24, 22, 23, 26, 23, 
@@ -369,9 +371,10 @@ class <- tibble(
 
 df <- filter(class, !is.na(bmi_3cat))
 CrossTable(df$persdoc,df$genhlth)
-#Data Management
+#2 Data Management
 df <- tibble(id = c(1, 2, 3),x  = c(0, 1, 0))
 df %>% filter(df$x==0)
+# 2.1 Creating and Modifying columns 
 
 class <- tibble(names = c("John", "Brad", "Sally", "Anne"), heights = c(68,71,63,72))
 class
@@ -392,7 +395,7 @@ study_data <- tibble(id = c(1, 2, 3, 4),site = c("TX", "CA", "tx", "CA"))
 study_data
 study_data$site[3] <- "TX"
 study_data
-
+# 2.2 Subsetting Data Frames
 set.seed(123)
 drug_trial <- tibble(
 id =rep(1:20,each=3),
@@ -440,7 +443,56 @@ drug_trial %>% rowwise() %>% mutate(any_se_year = sum(se_headache, se_diarrhea, 
 drug_trial_sub <- drug_trial %>% select(id, year, starts_with("se")) %>% 
 print()
 sum(drug_trial_sub$se_diarrhea)
+
 drug_trial_sub %>% rowwise() %>% 
 mutate(any_se_year = sum(se_headache, se_diarrhea, se_dry_mouth) > 0,
 all_se_year = sum(se_headache, se_diarrhea, se_dry_mouth) == 3
   )
+
+# 2.3 Working with Dates
+getwd()
+birth_dates <- read.csv("Data/birth_dates.csv")
+class(birth_dates)
+birth_dates %>% mutate(posix_to_date = as.Date(dob_actual))%>%
+  select(dob_actual,posix_to_date)
+str(birth_dates)
+
+birth_dates %>% mutate(dob_typical_into_date = as.Date(dob_typical,format = "%m/%d/%Y"))%>%
+  select(dob_typical_into_date,dob_typical)
+select(birth_dates,dob_long)
+birth_dates %>% mutate(dob_long_into_date = as.Date(dob_long, format = "%B %d, %Y"))%>%
+  select(dob_long_into_date,dob_long)
+birth_dates %>% mutate(dob_abbreviated = format(dob_actual, "%d %b %y")) %>% 
+  select(dob_actual, dob_abbreviated)
+Sys.Date()
+lubridate::today()
+Sys.time()
+lubridate::now()
+month.name
+month.abb
+seq.Date(from = as.Date("2020-01-01"),
+         to = as.Date("2020-01-15"),
+         by = "days")
+ages <- birth_dates %>% select(name_first, dob = dob_default) %>% 
+print()
+ages <- ages %>% mutate(today= as.Date("2020-05-07")) %>%
+  print()
+str(ages)
+ages %>% mutate(age_subtraction =  as.numeric(today - dob) / 365.25,
+age_difftime = as.numeric(difftime(today, dob))/365.25,
+age_lubridate   = (dob %--% today)/ years(1))
+
+ages %>% mutate(age_years=(dob%--%today) / years(1),
+                age_last = trunc(age_years),
+                age_near = round(age_years))
+ages <- ages%>% select(-today) %>% print()
+ages %>% 
+  mutate(day   = day(dob),month = month(dob),year  = year(dob))
+ages%>% arrange(dob)
+ages %>% arrange(desc(dob))
+# 2.4 Working with Character Strings
+#couldnt fine the rds file, will make one and come back
+
+
+#2.5 Conditional Operations
+
