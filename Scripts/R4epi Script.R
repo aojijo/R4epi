@@ -495,4 +495,143 @@ ages %>% arrange(desc(dob))
 
 
 #2.5 Conditional Operations
+?if_else
+rainy_days <- tibble(day=1:5,weather = c("rain", "rain", "rain", "no rain","rain"))
+rainy_days
+rainy_days %>% mutate(raincoat = if_else(weather=="rain","wear","no wear"))
+2*3
+df <- tibble(id = c(1, 1, 2, 2),outcome  = c(0, 1, 1, 1)) 
+df %>% mutate(treatment = if_else(row_number()%% 2==1, "A", "B"))
+
+blood_pressure <- tibble(
+  id     = 1:10,
+  sysbp  = c(152, 120, 119, 123, 135, 83, 191, 147, 209, 166),
+  diasbp = c(78, 60, 88, 76, 85, 54, 116, 95, 100, 106))
+blood_pressure %>% mutate(bp = if_else(sysbp < 120 & diasbp < 80, "Normal", "Not Normal"))
+
+blood_pressure %>% 
+  mutate(bp = case_when(
+      sysbp < 120 & diasbp < 80 ~ "Normal",
+      sysbp >= 120 & sysbp < 130 & diasbp < 80 ~ "Elevated",
+      sysbp >= 130 & sysbp < 140 | diasbp >= 80 & diasbp < 90 ~ "Hypertension Stage 1",
+      sysbp >= 140 | diasbp >= 90 ~ "Hypertension Stage 2"))
+
+#2.6 Working with multiple Data frames
+trial <- tibble(
+  year    = c(2016, 2017, 2018, 2019),
+  n       = c(501, 499, 498, 502),
+  outcome = c(51, 52, 49, 50)) 
+trial_2020 <- tibble(year = 2020, n = 500,outcome = 48, adv_event = 3) 
+trial %>% bind_rows(trial_2020)
+
+trial_2020 <- tibble(year = 2020,count = 500,adv_event = 3,outcomes  = 48)
+trial %>% bind_rows(trial_2020)
+trial %>% 
+  bind_rows(trial_2020 %>% 
+rename(n = count,
+outcome = outcomes))
+
+df1 <- tibble(
+  color = c("red", "green", "blue"),
+  size  = c("small", "medium", "large"))
+df2 <- tibble(amount = c(1, 4, 3),dose= c(10, 20, 30))
+df1
+df2
+df1 %>% bind_cols(df2)
+# left_join() keeps all the rows from the x data frame in the resulting combined data frame. However, it only keeps the rows from the y data frame that have a key value match in the x data frame.
+# Right_join() keeps all the rows from the y data frame in the resulting combined data frame, and only keep the rows from the x data frame that have a key value match in the y data frame. 
+# Full join keeps all the rows from both data frames in the resulting combined data frame. 
+# Inner join keeps only the rows from both data frames that have a key value match in the opposite data frame in the resulting combined data frame
+
+#One to One merge
+demographics <- tibble(
+  id       = c("1001", "1002", "1003", "1004"),
+  dob      = as.Date(c("1968-12-14", "1952-08-03", "1949-05-27", "1955-03-12")),
+  race_eth = c(1, 2, 2, 4))
+
+grip_strength <- tibble(
+  id     = c("1002", "1001", "1003", "1004"),
+  grip_r = c(32, 28, 32, 22),
+  grip_l = c(30, 30, 28, 22)) 
+demographics
+grip_strength
+demographics %>% left_join(grip_strength, by = "id")
+
+demographics <- tibble(
+  id = c("1001", "1002", "1003", "1004", "1005"),
+  dob = as.Date(c("1968-12-14", "1952-08-03", "1949-05-27", "1955-03-12", "1942-06-07")),
+  race_eth = c(1, 2, 2, 4, 3))
+demographics
+demographics %>% left_join(grip_strength, by = "id")
+grip_strength <- tibble(
+  pid    = c("1002", "1001", "1003", "1004"),
+  grip_r = c(32, 28, 32, 22),
+  grip_l = c(30, 30, 28, 22)) 
+grip_strength
+demographics %>% left_join(grip_strength, by = c("id" = "pid"))
+# make sure that the first column name you pass to the named vector (i.e., "id") is the name of the key column in the x data frame and that the second column name you pass to the named vector (i.e., "pid") is the name of the key column in the y data frame.
+
+#One to many merge
+grip_strength <- tibble(
+  id     = rep(c("1001", "1002", "1003", "1004"), each = 2),
+  visit  = rep(c("pre", "post"), 4),
+  grip_r = c(32, 33, 28, 27, 32, 34, 22, 27),
+  grip_l = c(30, 32, 30, 30, 28, 30, 22, 26))
+grip_strength
+demographics
+demographics %>% left_join(grip_strength, by = "id")
+# Merging multiple databses with multiple key columns(Many to many)
+emr <- tibble(
+  id     = rep(c("1001", "1002", "1003", "1004"), each = 2),
+  visit  = rep(c("pre", "post"), 4),
+  weight = c(105, 99, 200, 201, 136, 133, 170, 175))
+emr
+demographics %>% left_join(grip_strength, by = "id") %>% left_join(emr, by = c("id", "visit"))
+# Restructuring Data Frames
+babies <- tibble(
+  id   = 1001:1008,
+  sex  = c("F", "F", "M", "F", "M", "M", "M", "F"),
+  weight_3  = c(9, 11, 17, 16, 11, 17, 16, 15),
+  weight_6  = c(13, 16, 20, 18, 15, 21, 17, 16),
+  weight_9  = c(16, 17, 23, 21, 16, 25, 19, 18),
+  weight_12 = c(17, 20, 24, 22, 18, 26, 21, 19)) %>% print()
+
+babies_long <- babies %>% pivot_longer(cols = starts_with("weight"),
+names_to  = "months",
+names_prefix = "weight_",
+values_to  = "weight") %>% print()
+
+babies %>% pivot_longer(cols = starts_with("weight"),names_to = "months")
+
+babies %>% pivot_longer(
+cols = starts_with("weight"),
+names_to= "months",
+names_prefix = "weight_",
+values_to  = "weight")
+
+babies %>% pivot_longer(
+cols = starts_with("weight"),
+names_to  = "months",
+names_prefix = "weight_",
+values_to = "weight") %>% mutate(months = as.integer(months))
+
+set.seed(123)
+babies <- tibble(
+  id       = 1001:1008,
+  sex      = c("F", "F", "M", "F", "M", "M", "M", "F"),
+  weight_3  = c(9, 11, 17, 16, 11, 17, 16, 15),
+  weight_6  = c(13, 16, 20, 18, 15, 21, 17, 16),
+  weight_9  = c(16, 17, 23, 21, 16, 25, 19, 18),
+  weight_12 = c(17, 20, 24, 22, 18, 26, 21, 19),
+  length_3  = c(17, 19, 23, 20, 18, 22, 21, 18),
+  length_6  = round(length_3 + rnorm(8, 2, 1)),
+  length_9  = round(length_6 + rnorm(8, 2, 1)),
+  length_12 = round(length_9 + rnorm(8, 2, 1)),
+) %>% print()
+
+babies_long <- babies %>% pivot_longer(
+cols = c(-id,-sex),
+names_to  = "months",
+names_prefix = "weight_",
+values_to = "weight") %>% print()
 
